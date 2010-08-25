@@ -1,13 +1,8 @@
-require 'rubygems'
-require 'rake'
-require 'spec/rake/spectask'
+require 'rspec/core'
+require 'rspec/core/rake_task'
 
-spec_files = Rake::FileList["spec/**/*_spec.rb"]
-
-desc "Run specs"
-Spec::Rake::SpecTask.new do |t|
-  t.spec_files = spec_files
-  t.spec_opts = ["-c"]
+desc  "Run all specs with rcov"
+RSpec::Core::RakeTask.new(:rcov) do |t|
+  t.rcov = true
+  t.rcov_opts = %w{--rails --exclude osx\/objc,gems\/,spec\/,features\/}
 end
-
-task :default => :spec
