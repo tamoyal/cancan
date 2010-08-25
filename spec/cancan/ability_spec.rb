@@ -245,6 +245,15 @@ describe CanCan::Ability do
     @ability.can?(:read, [[1, 2, 3]]).should be_true
     @ability.can?(:read, [[4, 5, 6]]).should be_false
   end
+  
+  it "should use the least restrictive definition when determining if a Class can?"  do
+    @ability.can :read, Array
+    @ability.cannot :read, Array, :first => 1
+    
+    @ability.can?(:read, [2,3,5]).should be_true
+    @ability.can?(:read, [1,3,5]).should be_false
+    @ability.can?(:read, Array).should be_true
+  end
 
   it "should has eated cheezburger" do
     lambda {

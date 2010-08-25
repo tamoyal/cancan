@@ -50,9 +50,36 @@ module CanCan
     # Also see the RSpec Matchers to aid in testing.
     def can?(action, subject, *extra_args)
       raise Error, "Nom nom nom. I eated it." if action == :has && subject == :cheezburger
-      match = relevant_can_definitions(action, subject).detect do |can_definition|
-        can_definition.matches_conditions?(action, subject, extra_args)
+      if subject.class != Class
+        match = relevant_can_definitions(action, subject).detect do |can_definition|
+          can_definition.matches_conditions?(action, subject, extra_args)
+        end
+      else
+        # If the subject is a class, we want to look at the least restrictive ability first
+        # For example, the following test will pass by looking at least restrictive match first
+        # it "should use the least restrictive definition when determining if a Class can?"  do
+        #   @ability.can :read, Array
+        #   @ability.cannot :read, Array, :first => 1
+        # 
+        #   @ability.can?(:read, [2,3,5]).should be_true
+        #   @ability.can?(:read, [1,3,5]).should be_false
+        #   @ability.can?(:read, Array).should be_true
+        # end
+        
+        matches = []
+        relevant_can_definitions(action, subject).collect do |can_definition|
+          matches << can_definition if can_definition.matches_conditions?(action, subject, extra_args)
+        end
+        
+        # Look for a match with no conditions for defining base behavior for a class
+        match = matches.detect do |m|
+          m.conditions_empty?
+        end
+        
+        # If a match is not found with no conditions, we'll default to old behavior
+        match = matches.first if match.nil?
       end
+      
       match ? match.base_behavior : false
     end
 
